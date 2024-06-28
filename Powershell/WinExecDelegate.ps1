@@ -11,7 +11,7 @@
 	
 }
 
-$WinExec = LookupFunc kernel32.dll WinExec
+$WinExecA = LookupFunc kernel32.dll WinExec
 
 $Assembly = New-Object System.Reflection.AssemblyName('WinExecDelegate')
 $Domain = [AppDomain]::CurrentDomain
@@ -33,5 +33,5 @@ $MethodBuilder.SetImplementationFlags('Runtime, Managed')
 
 $WinExecSig = $TypeBuilder.CreateType()
 
-$WinExec = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($WinExec, $WinExecSig)
+$WinExec = [System.Runtime.InteropServices.Marshal]::GetDelegateForFunctionPointer($WinExecA, $WinExecSig)
 $WinExec.Invoke("notepad.exe", 1)

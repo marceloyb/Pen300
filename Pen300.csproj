@@ -8,13 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="ShellcodeExecution.ps1" />
-    <None Remove="WinExecDelegate.ps1" />
+    <Compile Remove="ShellcodeExecution.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="WinExecDelegate.ps1" />
-    <Compile Include="ShellcodeExecution.ps1" />
+    <None Include="CS\ShellcodeExecution.cs" />
   </ItemGroup>
 
 </Project>

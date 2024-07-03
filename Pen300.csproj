@@ -5,14 +5,23 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <StartupObject>Pen300.CS.ShellcodeExecution</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="CS\DllReflection.cs" />
+    <Compile Remove="CS\ProcessHollowing.cs" />
     <Compile Remove="ShellcodeExecution.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="CS\DllReflection.cs" />
+    <None Include="CS\ProcessHollowing.cs" />
     <None Include="CS\ShellcodeExecution.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="System\Configuration\" />
   </ItemGroup>
 
 </Project>

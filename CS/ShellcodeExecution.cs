@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 
 namespace ClassLibrary1
 {
@@ -12,7 +6,7 @@ namespace ClassLibrary1
     {
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
         static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize,
-     uint flAllocationType, uint flProtect);
+        uint flAllocationType, uint flProtect);
 
         [DllImport("kernel32.dll")]
         static extern IntPtr CreateThread(IntPtr lpThreadAttributes, uint dwStackSize,

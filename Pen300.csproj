@@ -5,16 +5,18 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StartupObject>Pen300.CS.ShellcodeExecution</StartupObject>
+    <StartupObject>Pen300.CS.AmsiDisable</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="CS\AesFunc.cs" />
     <Compile Remove="CS\DllReflection.cs" />
     <Compile Remove="CS\ProcessHollowing.cs" />
     <Compile Remove="ShellcodeExecution.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="CS\AesFunc.cs" />
     <None Include="CS\DllReflection.cs" />
     <None Include="CS\ProcessHollowing.cs" />
     <None Include="CS\ShellcodeExecution.cs" />

@@ -5,19 +5,30 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <StartupObject>Pen300.CS.AmsiDisable</StartupObject>
+    <StartupObject>Pen300.CS.AesFunc</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="CS\AesFunc.cs" />
+    <Compile Remove="CS\AmsiDisable.cs" />
+    <Compile Remove="CS\DllInjection.cs" />
     <Compile Remove="CS\DllReflection.cs" />
+    <Compile Remove="CS\EncryptedShellcodeExecution.cs" />
+    <Compile Remove="CS\HalloweenDec.cs" />
     <Compile Remove="CS\ProcessHollowing.cs" />
     <Compile Remove="ShellcodeExecution.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="CS\AesFunc.cs" />
+    <None Remove="Powershell\Pt1.ps1" />
+    <None Remove="Powershell\Pt2.ps1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="CS\AmsiDisable.cs" />
+    <None Include="CS\DllInjection.cs" />
     <None Include="CS\DllReflection.cs" />
+    <None Include="CS\EncryptedShellcodeExecution.cs" />
+    <None Include="CS\HalloweenDec.cs" />
     <None Include="CS\ProcessHollowing.cs" />
     <None Include="CS\ShellcodeExecution.cs" />
   </ItemGroup>

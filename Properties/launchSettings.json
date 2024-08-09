@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Pen300": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\code\\payload.bin"
+    }
+  }
+}

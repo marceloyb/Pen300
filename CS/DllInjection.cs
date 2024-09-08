@@ -42,7 +42,7 @@ namespace Pen300.CS
             Console.WriteLine("dllName" + dllName);
 
             int processId = 4332; // Replace with the actual process ID
-            IntPtr hProcess = OpenProcess(0x001F0FFF, false, processId);
+            IntPtr hProcess = OpenProcess(0x001F0FFF, false, pid);
 
             if (hProcess == IntPtr.Zero)
             {

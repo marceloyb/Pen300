@@ -1,30 +1,23 @@
 ﻿function Get-UserGroupSIDs {
     [System.Security.Principal.WindowsIdentity]::GetCurrent().Groups |
-        ForEach-Object { $_.Translate([System.Security.Principal.NTAccount]).Value } |
-        ForEach-Object {
-            $groupName = $_.Split('\')[-1]
-            $searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]"")
-            $searcher.Filter = "(&(objectClass=group)(sAMAccountName=$groupName))"
-            $searcher.PropertiesToLoad.Add("objectSid") | Out-Null
-            $result = $searcher.FindOne()
-            if ($result) {
-                $sidBytes = $result.Properties["objectSid"][0]
-                $sid = New-Object System.Security.Principal.SecurityIdentifier($sidBytes, 0)
-                $sid.Value
-            }
-        }
+        ForEach-Object { $_.Value }  # Obtém os SIDs diretamente
 }
 
 # Obter os SIDs dos grupos do usuário atual
 $groupSIDs = Get-UserGroupSIDs
-# Obter todos os serviços
 $services = Get-WmiObject -Class Win32_Service
 
 foreach ($service in $services) {
 	$serviceName = $service.Name
 	$command = "cmd /c 'sc sdshow $serviceName'"
 	$sd = Invoke-Expression $command
-	$securityDescriptor = New-Object System.Security.AccessControl.CommonSecurityDescriptor $false, $false, $sd
+	try {
+		$securityDescriptor = New-Object System.Security.AccessControl.CommonSecurityDescriptor $false, $false, $sd
+	} catch {
+		# Suprime o erro e continua a execução
+		continue
+	}
+	$securityDescriptor = New-Object System.Security.AccessControl.CommonSecurityDescriptor $false, $false, $sd -ErrorAction SilentlyContinue
 	$dacl = $securityDescriptor.DiscretionaryAcl
 	foreach ($ace in $dacl) {
 		$sid = $ace.SecurityIdentifier

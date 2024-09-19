@@ -14,7 +14,6 @@
     <Compile Remove="CS\DllReflection.cs" />
     <Compile Remove="CS\EncryptedShellcodeExecution.cs" />
     <Compile Remove="CS\HalloweenDec.cs" />
-    <Compile Remove="CS\ProcessHollowing.cs" />
     <Compile Remove="ShellcodeExecution.cs" />
   </ItemGroup>
 
@@ -29,7 +28,6 @@
     <None Include="CS\DllReflection.cs" />
     <None Include="CS\EncryptedShellcodeExecution.cs" />
     <None Include="CS\HalloweenDec.cs" />
-    <None Include="CS\ProcessHollowing.cs" />
     <None Include="CS\ShellcodeExecution.cs" />
   </ItemGroup>
 

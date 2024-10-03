@@ -13,6 +13,7 @@ namespace ExtensionToolkit
                 return;
             }
 
+
             var commandMap = new Dictionary<string, Action>
             {
                 { "lsass", () => Func.DumpLsass.DumpLs() },
@@ -21,6 +22,18 @@ namespace ExtensionToolkit
                 { "sql", () => Func.MsSql.Sql(args) },
                 { "recon", () => Func.DomainRecon.Recon(args) }
             };
+
+            if (args[0].Equals("help"))
+            {
+
+                Console.WriteLine("Available operations:");
+                foreach (var entry in commandMap)
+                {
+                    Console.WriteLine($"- {entry.Key}");
+                }
+
+                return;
+            }
 
             if (commandMap.TryGetValue(args[0], out Action action))
             {

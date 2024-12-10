@@ -132,6 +132,7 @@ namespace ExtensionToolkit.Func
 
         public static SqlConnection AuthSql(string sqlServer, string database)
         {
+            //String conString = "Server = " + sqlServer + "; Database = " + database + ";";
             String conString = "Server = " + sqlServer + "; Database = " + database + "; Integrated Security = True;";
             SqlConnection con = new SqlConnection(conString);
 
@@ -232,6 +233,7 @@ namespace ExtensionToolkit.Func
                            "FROM sys.server_permissions a " +
                            "INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id " +
                            "WHERE a.permission_name = 'IMPERSONATE';";
+            // "SELECT DISTINCT b.name FROM sys.server_permissions a INNER JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE';";
 
             if (!string.IsNullOrEmpty(linkedServer))
             {
@@ -288,11 +290,11 @@ namespace ExtensionToolkit.Func
 
             if (!string.IsNullOrEmpty(linkedServer))
             {
-                query = $"EXEC ('EXEC master..xp_dirtree \"\\\\[{host}]\\\\test\"') AT [{linkedServer}];";
+                query = $"EXEC ('EXEC master..xp_dirtree \"\\\\{host}\\test\"') AT [{linkedServer}];";
             }
             else
             {
-                query = $"EXEC master..xp_dirtree \"\\\\[{host}]\\\\test\";";
+                query = $"EXEC master..xp_dirtree \"\\\\{host}\\test\";";
             }
             Console.WriteLine($"Attempting to execute: {query}");
 
@@ -347,8 +349,13 @@ namespace ExtensionToolkit.Func
         {
             using (SqlCommand command = new SqlCommand(query, con))
             {
-                command.CommandTimeout = 30; // Definindo tempo limite
-                return command.ExecuteScalar()?.ToString(); // Usando ExecuteScalar para retornar um único valor
+                try
+                {
+                    command.CommandTimeout = 30; // Definindo tempo limite
+                    return command.ExecuteScalar()?.ToString(); // Usando ExecuteScalar para retornar um único valor
+                }
+                catch (Exception ex) { return ex.Message; }
+
             }
         }
 
@@ -356,8 +363,12 @@ namespace ExtensionToolkit.Func
         {
             using (SqlCommand command = new SqlCommand(query, con))
             {
-                command.CommandTimeout = 30; // Definindo tempo limite
-                command.ExecuteNonQuery(); // Executa a consulta sem retornar resultados
+                try
+                {
+                    command.CommandTimeout = 30; // Definindo tempo limite
+                    command.ExecuteNonQuery(); // Executa a consulta sem retornar resultados
+                }
+                catch (Exception ex) { }
             }
         }
     }

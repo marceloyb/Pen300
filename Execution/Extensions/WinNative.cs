@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Execution.Extensions
 {
@@ -7,8 +8,8 @@ namespace Execution.Extensions
     {
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern IntPtr CreateNamedPipe(string lpName, uint dwOpenMode,
-  uint dwPipeMode, uint nMaxInstances, uint nOutBufferSize, uint nInBufferSize,
-  uint nDefaultTimeOut, IntPtr lpSecurityAttributes);
+          uint dwPipeMode, uint nMaxInstances, uint nOutBufferSize, uint nInBufferSize,
+          uint nDefaultTimeOut, IntPtr lpSecurityAttributes);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool ConnectNamedPipe(IntPtr hNamedPipe, IntPtr lpOverlapped);
@@ -34,10 +35,19 @@ namespace Execution.Extensions
         public extern static bool DuplicateTokenEx(IntPtr hExistingToken, uint dwDesiredAccess, IntPtr lpTokenAttributes, uint ImpersonationLevel, uint TokenType, out IntPtr phNewToken);
 
         [DllImport("advapi32", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern bool CreateProcessWithTokenW(IntPtr hToken, UInt32 dwLogonFlags, string lpApplicationName, string lpCommandLine, UInt32 dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
+        public static extern bool CreateProcessWithTokenW(IntPtr hToken, LogonFlags dwLogonFlags, string lpApplicationName, string lpCommandLine, CreationFlags dwCreationFlags, IntPtr lpEnvironment, string lpCurrentDirectory, [In] ref STARTUPINFO lpStartupInfo, out PROCESS_INFORMATION lpProcessInformation);
 
         [DllImport("advapi32.dll", SetLastError = true)]
         public static extern bool ImpersonateLoggedOnUser(IntPtr hToken);
+
+        [DllImport("kernel32.dll")]
+        public static extern uint GetSystemDirectory([Out] StringBuilder lpBuffer, uint uSize);
+
+        [DllImport("userenv.dll", SetLastError = true)]
+        public static extern bool CreateEnvironmentBlock(out IntPtr lpEnvironment, IntPtr hToken, bool bInherit);
+
+        [DllImport("advapi32.dll", SetLastError = true)]
+        public static extern bool RevertToSelf();
 
         [StructLayout(LayoutKind.Sequential)]
         public struct TOKEN_USER
@@ -59,6 +69,23 @@ namespace Execution.Extensions
             public IntPtr hThread;
             public int dwProcessId;
             public int dwThreadId;
+        }
+
+        public enum CreationFlags
+        {
+            DefaultErrorMode = 0x04000000,
+            NewConsole = 0x00000010,
+            NewProcessGroup = 0x00000200,
+            SeparateWOWVDM = 0x00000800,
+            Suspended = 0x00000004,
+            UnicodeEnvironment = 0x00000400,
+            ExtendedStartupInfoPresent = 0x00080000
+        }
+
+        public enum LogonFlags
+        {
+            WithProfile = 1,
+            NetCredentialsOnly
         }
 
         [StructLayout(LayoutKind.Sequential)]

